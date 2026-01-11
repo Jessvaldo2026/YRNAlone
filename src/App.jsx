@@ -11014,7 +11014,17 @@ const YRNAloneApp = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
-  
+
+  // 🎯 BUG 1 FIX: Check for pending admin redirect on mount
+  useEffect(() => {
+    const pendingRedirect = sessionStorage.getItem('pendingAdminRedirect');
+    if (pendingRedirect === 'true') {
+      console.log('🏢 Found pending admin redirect flag, redirecting to admin dashboard');
+      sessionStorage.removeItem('pendingAdminRedirect');
+      setCurrentView('admin');
+    }
+  }, []);
+
   const [user, setUser] = useState({
     id: Date.now(), name: 'Friend', streak: 1, appTheme: 'cute', profilePicture: null,
     privacy: { anonymous: false, showOnline: true, allowMatching: true },

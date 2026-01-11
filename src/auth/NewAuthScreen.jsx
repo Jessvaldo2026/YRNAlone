@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import {
   Heart, Mail, Lock, User, Eye, EyeOff, ArrowLeft, Building2,
-  UserCircle, Shield, KeyRound, CheckCircle, ChevronDown
+  UserCircle, Shield, KeyRound, CheckCircle, ChevronDown, Users
 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import {
@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 // Organization types for dropdown
 const ORG_TYPES = [
@@ -26,7 +26,7 @@ const ORG_TYPES = [
 ];
 
 const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
-  // Main view: 'main' | 'individual' | 'organization' | 'forgot'
+  // Main view: 'main' | 'individual' | 'organization' | 'forgot' | 'joinWithCode'
   const [view, setView] = useState('main');
 
   // Individual form state
@@ -44,6 +44,13 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
   const [newOrgAdminName, setNewOrgAdminName] = useState('');
   const [newOrgAdminEmail, setNewOrgAdminEmail] = useState('');
   const [newOrgPassword, setNewOrgPassword] = useState('');
+
+  // 🎯 BUG 3: Join with Access Code state
+  const [accessCode, setAccessCode] = useState('');
+  const [joinName, setJoinName] = useState('');
+  const [joinEmail, setJoinEmail] = useState('');
+  const [joinPassword, setJoinPassword] = useState('');
+  const [showJoinPwd, setShowJoinPwd] = useState(false);
 
   // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -137,13 +144,29 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
   };
 
   // Handle Organization Admin Sign In
+  // 🎯 BUG 1 FIX: Check if user is org admin and set redirect flag
   const handleOrgSignIn = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, orgLoginEmail, orgLoginPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, orgLoginEmail, orgLoginPassword);
+
+      // 🎯 BUG 1 FIX: Check if user is an org admin and set redirect flag
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+        const userData = userDoc.data();
+
+        if (userData?.isOrgAdmin && userData?.organizationId) {
+          // Set flag for redirect to admin dashboard
+          sessionStorage.setItem('pendingAdminRedirect', 'true');
+          console.log('🏢 Org admin logged in, setting redirect flag');
+        }
+      } catch (checkErr) {
+        console.log('Could not check admin status:', checkErr);
+      }
+
       onSuccess?.();
     } catch (err) {
       if (err.code === 'auth/user-not-found') setError('No admin account found');
@@ -224,6 +247,10 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
         language: 'en'
       });
 
+      // 🎯 BUG 1 FIX: Set redirect flag for new org admin
+      sessionStorage.setItem('pendingAdminRedirect', 'true');
+      console.log('🏢 New org admin registered, setting redirect flag');
+
       onSuccess?.();
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setError('An account with this email already exists');
@@ -251,6 +278,94 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
     } catch (err) {
       if (err.code === 'auth/user-not-found') setError('No account found with this email');
       else setError(err.message || 'Failed to send reset email');
+    }
+    setLoading(false);
+  };
+
+  // 🎯 BUG 3 FIX: Handle Join Organization with Access Code
+  const handleJoinWithAccessCode = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!accessCode.trim()) {
+      setError('Please enter an access code');
+      return;
+    }
+    if (!joinName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+    if (!joinEmail.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (joinPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Find organization by access code
+      const orgsRef = collection(db, 'organizations');
+      const orgQuery = query(orgsRef, where('accessCode', '==', accessCode.trim().toUpperCase()));
+      const orgSnap = await getDocs(orgQuery);
+
+      if (orgSnap.empty) {
+        setError('Invalid access code. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+
+      const orgDoc = orgSnap.docs[0];
+      const orgData = orgDoc.data();
+      const orgId = orgDoc.id;
+
+      // Create user account
+      const userCredential = await createUserWithEmailAndPassword(auth, joinEmail, joinPassword);
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: joinName });
+
+      // Create user profile linked to organization (as member, not admin)
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: joinEmail,
+        displayName: joinName,
+        name: joinName,
+        organizationId: orgId,
+        isOrgAdmin: false,
+        isOrgMember: true,
+        isPremium: true, // Org members get premium access
+        createdAt: serverTimestamp(),
+        language: 'en',
+        joinedViaAccessCode: true,
+        settings: {
+          notifications: true,
+          highContrast: false,
+          textSize: 'medium'
+        },
+        stats: {
+          postsCreated: 0,
+          journalEntries: 0,
+          supportGiven: 0,
+          daysActive: 0
+        }
+      });
+
+      // Update organization member count
+      await updateDoc(doc(db, 'organizations', orgId), {
+        memberCount: (orgData.memberCount || 1) + 1
+      });
+
+      console.log(`✅ User joined ${orgData.name} via access code`);
+      onSuccess?.();
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') setError('An account with this email already exists');
+      else if (err.code === 'auth/invalid-email') setError('Invalid email address');
+      else if (err.code === 'auth/weak-password') setError('Password is too weak');
+      else setError(err.message || 'Failed to join organization');
     }
     setLoading(false);
   };
@@ -692,12 +807,152 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
             </div>
           </div>
 
+          {/* 🎯 BUG 3 FIX: Join with Access Code Button */}
+          <div className="mt-6">
+            <div className="relative flex items-center justify-center mb-4">
+              <div className="border-t border-gray-300 flex-1"></div>
+              <span className="px-4 text-gray-500 text-sm">or</span>
+              <div className="border-t border-gray-300 flex-1"></div>
+            </div>
+            <button
+              onClick={() => { setView('joinWithCode'); setError(''); }}
+              className="w-full p-4 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition shadow-lg"
+            >
+              <Users className="w-5 h-5" />
+              Join Organization with Access Code
+            </button>
+            <p className="text-center text-xs text-gray-500 mt-2">
+              For employees, patients, or students with an organization access code
+            </p>
+          </div>
+
           {/* Error Message */}
           {error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
               {error}
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================
+  // 🎯 BUG 3 FIX: JOIN WITH ACCESS CODE
+  // ============================================
+  if (view === 'joinWithCode') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-100 via-teal-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl">
+          <button
+            onClick={() => { setView('organization'); setError(''); }}
+            className="flex items-center gap-2 text-teal-600 font-medium mb-6 hover:underline"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Organization Portal
+          </button>
+
+          <div className="text-center mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Users className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Join Your Organization</h1>
+            <p className="text-gray-500 mt-2">Enter the access code provided by your organization</p>
+          </div>
+
+          <form onSubmit={handleJoinWithAccessCode} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Access Code</label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none text-center font-mono text-lg tracking-widest uppercase"
+                  placeholder="XXXXXXXX"
+                  maxLength={8}
+                  required
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">8-character code from your organization admin</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Your Full Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={joinName}
+                  onChange={(e) => setJoinName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={joinEmail}
+                  onChange={(e) => setJoinEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type={showJoinPwd ? 'text' : 'password'}
+                  value={joinPassword}
+                  onChange={(e) => setJoinPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
+                  placeholder="At least 6 characters"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowJoinPwd(!showJoinPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showJoinPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>✅ Join Organization</>
+              )}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-xs text-gray-500">
+            By joining, you agree to our Terms of Service and Privacy Policy
+          </p>
         </div>
       </div>
     );
