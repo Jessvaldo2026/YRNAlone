@@ -1,0 +1,1553 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   🎨 YRNALONE PREMIUM UI - 2025 DESIGN SYSTEM
+   Inspired by: Apple Liquid Glass, Headspace, Calm
+   ============================================ */
+
+:root {
+  /* Premium Color Palette */
+  --primary-purple: #a855f7;
+  --primary-pink: #ec4899;
+  --primary-gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-blur: 20px;
+  --shadow-soft: 0 4px 30px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 40px rgba(0, 0, 0, 0.12);
+  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-glow: 0 0 40px rgba(168, 85, 247, 0.3);
+  
+  /* Animation Timing */
+  --ease-premium: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #faf5ff 0%, #fdf2f8 50%, #eff6ff 100%);
+  min-height: 100vh;
+}
+
+/* ============================================
+   💎 APPLE LIQUID GLASS EFFECT (2025)
+   ============================================ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.glass-card-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.1),
+    inset 0 2px 2px rgba(255, 255, 255, 0.9);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   🔘 NEUMORPHISM 2.0 BUTTONS
+   ============================================ */
+.btn-premium {
+  position: relative;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  padding: 16px 32px;
+  font-size: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s var(--ease-spring);
+  box-shadow: 
+    0 4px 15px rgba(168, 85, 247, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.btn-premium:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 8px 30px rgba(168, 85, 247, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.btn-premium:active {
+  transform: translateY(-1px) scale(0.98);
+  transition: all 0.1s ease;
+}
+
+.btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.btn-premium:hover::before {
+  left: 100%;
+}
+
+.btn-soft {
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+  border-radius: 14px;
+  padding: 14px 28px;
+  font-weight: 600;
+  transition: all 0.3s var(--ease-smooth);
+  box-shadow: 
+    0 2px 8px rgba(168, 85, 247, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.btn-soft:hover {
+  background: rgba(168, 85, 247, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 16px rgba(168, 85, 247, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================
+   📱 PREMIUM CARD STYLES
+   ============================================ */
+.card-premium {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.06),
+    0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.4s var(--ease-premium);
+}
+
+.card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-elevated {
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 
+    0 8px 30px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.5s var(--ease-spring);
+}
+
+.card-elevated:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+}
+
+.card-glow {
+  position: relative;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.card-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(168, 85, 247, 0.1) 60deg,
+    transparent 120deg
+  );
+  animation: rotateGlow 8s linear infinite;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.card-glow:hover::before {
+  opacity: 1;
+}
+
+@keyframes rotateGlow {
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   ✨ MICRO-INTERACTIONS & ANIMATIONS
+   ============================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer-premium {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(-1deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Animation Classes */
+.animate-fade-up {
+  animation: fadeInUp 0.6s var(--ease-premium) forwards;
+}
+
+.animate-fade-scale {
+  animation: fadeInScale 0.5s var(--ease-spring) forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.5s var(--ease-premium) forwards;
+}
+
+.animate-slide-left {
+  animation: slideInLeft 0.5s var(--ease-premium) forwards;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s var(--ease-spring) forwards;
+}
+
+.animate-float {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Staggered Animations */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* ============================================
+   💀 SKELETON LOADING (Premium)
+   ============================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer-premium 2s infinite linear;
+  border-radius: 12px;
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.skeleton-card {
+  height: 120px;
+  border-radius: 20px;
+}
+
+/* ============================================
+   🎯 PREMIUM TYPOGRAPHY
+   ============================================ */
+.text-display {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.text-headline {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.text-body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.6;
+}
+
+.text-caption {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   🖱️ PREMIUM HOVER EFFECTS
+   ============================================ */
+.hover-lift {
+  transition: all 0.4s var(--ease-spring);
+}
+
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.hover-scale {
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-glow {
+  transition: all 0.4s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+}
+
+.hover-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transform: rotate(30deg);
+  transition: transform 0.6s ease;
+  opacity: 0;
+}
+
+.hover-shine:hover::after {
+  opacity: 1;
+  transform: rotate(30deg) translateX(100%);
+}
+
+/* ============================================
+   📜 CUSTOM SCROLLBAR (Premium)
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a855f7 0%, #ec4899 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9333ea 0%, #db2777 100%);
+  background-clip: padding-box;
+}
+
+/* ============================================
+   ✨ SELECTION (Premium)
+   ============================================ */
+::selection {
+  background: rgba(168, 85, 247, 0.25);
+  color: #1f2937;
+}
+
+/* ============================================
+   🌈 GRADIENT BACKGROUNDS
+   ============================================ */
+.gradient-premium {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f472b6 100%);
+}
+
+.gradient-calm {
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f0abfc 100%);
+}
+
+.gradient-sunset {
+  background: linear-gradient(135deg, #f472b6 0%, #fb923c 50%, #fbbf24 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 50%, #8b5cf6 100%);
+}
+
+.gradient-forest {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+}
+
+.gradient-mesh {
+  background: 
+    radial-gradient(at 40% 20%, rgba(168, 85, 247, 0.3) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(236, 72, 153, 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(59, 130, 246, 0.2) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(168, 85, 247, 0.2) 0px, transparent 50%);
+}
+
+/* ============================================
+   📱 INPUT FIELDS (Premium)
+   ============================================ */
+.input-premium {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s var(--ease-smooth);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.input-premium:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 
+    0 0 0 4px rgba(168, 85, 247, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  background: white;
+}
+
+.input-premium::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================
+   🎭 MODAL BACKDROP (Premium)
+   ============================================ */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 28px;
+  box-shadow: 
+    0 25px 80px rgba(0, 0, 0, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.1);
+  animation: fadeInScale 0.4s var(--ease-spring) forwards;
+}
+
+/* ============================================
+   🔔 NOTIFICATION BADGE (Premium)
+   ============================================ */
+.badge-premium {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ============================================
+   🏷️ CHIP/TAG (Premium)
+   ============================================ */
+.chip-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.chip-premium:hover {
+  background: rgba(168, 85, 247, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   📊 PROGRESS BAR (Premium)
+   ============================================ */
+.progress-premium {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-premium-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%);
+  border-radius: 100px;
+  transition: width 0.6s var(--ease-spring);
+  position: relative;
+}
+
+.progress-premium-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer-premium 2s infinite;
+}
+
+/* ============================================
+   🌙 DARK MODE SUPPORT
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    background: #0f172a;
+    color: #f1f5f9;
+  }
+  
+  .auto-dark .card-premium {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ============================================
+   📱 RESPONSIVE (Premium)
+   ============================================ */
+@media (max-width: 768px) {
+  .card-premium,
+  .card-elevated {
+    border-radius: 20px;
+    padding: 20px;
+  }
+  
+  .btn-premium {
+    padding: 14px 24px;
+    border-radius: 14px;
+  }
+  
+  .glass-card {
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+  }
+}
+
+/* ============================================
+   🎪 SPECIAL EFFECTS
+   ============================================ */
+.sparkle {
+  position: relative;
+}
+
+.sparkle::before,
+.sparkle::after {
+  content: '✨';
+  position: absolute;
+  font-size: 12px;
+  animation: float-gentle 3s ease-in-out infinite;
+}
+
+.sparkle::before {
+  top: -10px;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.sparkle::after {
+  top: -8px;
+  right: 10%;
+  animation-delay: 1.5s;
+}
+
+/* Rainbow Border Effect */
+.rainbow-border {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+}
+
+.rainbow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  background: linear-gradient(
+    90deg,
+    #a855f7, #ec4899, #f472b6, #fb7185, #f472b6, #ec4899, #a855f7
+  );
+  background-size: 300% 100%;
+  animation: gradient-shift 4s linear infinite;
+  z-index: -1;
+}
+
+/* Breathing Animation for Wellness */
+.breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* App Layout */
+.app {
+  min-height: 100vh;
+  padding-bottom: 90px;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 80px;
+}
+
+/* ============================================
+   ✅ READY FOR PREMIUM EXPERIENCE
+   ============================================ */
+
+/* ============================================
+   💎 3D CRYSTAL EFFECTS - INDUSTRIAL GRADE 2026
+   Artist-Level Glass & Crystal Design System
+   ============================================ */
+
+/* 💎 CRYSTAL CARD - 3D Glass Effect */
+.crystal-card {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(168, 85, 247, 0.1),
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    inset 0 -2px 4px rgba(168, 85, 247, 0.05);
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crystal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: 28px 28px 0 0;
+  pointer-events: none;
+}
+
+.crystal-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 60px rgba(168, 85, 247, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(255, 255, 255, 1),
+    inset 0 -2px 4px rgba(168, 85, 247, 0.1);
+}
+
+/* 💎 CRYSTAL BUTTON - 3D Depth Effect */
+.crystal-btn {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 1) 0%,
+    rgba(236, 72, 153, 1) 100%
+  );
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 700;
+  padding: 16px 32px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 4px 20px rgba(168, 85, 247, 0.4),
+    0 8px 40px rgba(236, 72, 153, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.crystal-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: 16px 16px 0 0;
+  pointer-events: none;
+}
+
+.crystal-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.crystal-btn:hover {
+  transform: translateY(-4px) rotateX(5deg);
+  box-shadow: 
+    0 12px 40px rgba(168, 85, 247, 0.5),
+    0 16px 60px rgba(236, 72, 153, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.crystal-btn:hover::after {
+  transform: translateX(100%);
+}
+
+.crystal-btn:active {
+  transform: translateY(-2px) rotateX(2deg) scale(0.98);
+}
+
+/* 💎 CRYSTAL AVATAR - 3D Profile Picture */
+.crystal-avatar {
+  position: relative;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.2) 0%,
+    rgba(236, 72, 153, 0.2) 100%
+  );
+  padding: 4px;
+  box-shadow: 
+    0 4px 20px rgba(168, 85, 247, 0.3),
+    0 8px 40px rgba(236, 72, 153, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crystal-avatar::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+.crystal-avatar:hover {
+  transform: scale(1.1) rotateY(10deg);
+  box-shadow: 
+    0 8px 30px rgba(168, 85, 247, 0.4),
+    0 16px 60px rgba(236, 72, 153, 0.3);
+}
+
+.crystal-avatar img {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+}
+
+/* 💎 CRYSTAL INPUT - Frosted Glass */
+.crystal-input {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(168, 85, 247, 0.2);
+  border-radius: 16px;
+  padding: 16px 20px;
+  font-size: 16px;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.02),
+    0 2px 8px rgba(168, 85, 247, 0.05);
+}
+
+.crystal-input:focus {
+  outline: none;
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.02),
+    0 0 0 4px rgba(168, 85, 247, 0.1),
+    0 4px 20px rgba(168, 85, 247, 0.15);
+}
+
+.crystal-input::placeholder {
+  color: #9ca3af;
+}
+
+/* 💎 CRYSTAL BADGE - Floating Label */
+.crystal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.15) 0%,
+    rgba(236, 72, 153, 0.15) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  box-shadow: 
+    0 2px 10px rgba(168, 85, 247, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.crystal-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 20px rgba(168, 85, 247, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* 💎 CRYSTAL ICON - 3D Icon Container */
+.crystal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 1) 0%,
+    rgba(236, 72, 153, 1) 100%
+  );
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 
+    0 4px 20px rgba(168, 85, 247, 0.4),
+    0 8px 40px rgba(236, 72, 153, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+
+.crystal-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+
+.crystal-icon:hover {
+  transform: translateY(-4px) rotateY(10deg) rotateX(5deg);
+  box-shadow: 
+    0 8px 30px rgba(168, 85, 247, 0.5),
+    0 16px 60px rgba(236, 72, 153, 0.3);
+}
+
+/* 💎 CRYSTAL STATS CARD - Dashboard Metrics */
+.crystal-stat {
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.8) 100%
+  );
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  padding: 24px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+}
+
+.crystal-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+  background-size: 200% 100%;
+  animation: gradient-shift 3s linear infinite;
+}
+
+.crystal-stat:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 
+    0 12px 40px rgba(168, 85, 247, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+}
+
+/* 💎 CRYSTAL NOTIFICATION - Toast Style */
+.crystal-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  backdrop-filter: blur(40px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.15),
+    0 4px 20px rgba(168, 85, 247, 0.1);
+  animation: toast-slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* 💎 CRYSTAL PROGRESS BAR */
+.crystal-progress {
+  position: relative;
+  height: 12px;
+  background: rgba(168, 85, 247, 0.1);
+  border-radius: 100px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.crystal-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  border-radius: 100px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 2px 10px rgba(168, 85, 247, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.crystal-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* 💎 CRYSTAL MODAL - Overlay with Depth */
+.crystal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.3s ease;
+}
+
+.crystal-modal {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 32px;
+  padding: 32px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 
+    0 20px 80px rgba(0, 0, 0, 0.2),
+    0 8px 32px rgba(168, 85, 247, 0.15),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+  animation: modal-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 💎 CRYSTAL SKELETON - Loading State */
+.crystal-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.1) 0%,
+    rgba(236, 72, 153, 0.1) 50%,
+    rgba(168, 85, 247, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 💎 CRYSTAL RIPPLE - Touch Feedback */
+.crystal-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.crystal-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+  opacity: 0;
+}
+
+.crystal-ripple:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 1;
+  transition: 0s;
+}
+
+/* ============================================
+   🏭 INDUSTRIAL-GRADE UI UTILITIES
+   ============================================ */
+
+/* Error State */
+.error-shake {
+  animation: error-shake 0.5s ease;
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-10px); }
+  40%, 80% { transform: translateX(10px); }
+}
+
+/* Success Pulse */
+.success-pulse {
+  animation: success-pulse 0.5s ease;
+}
+
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Loading Dots */
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: loading-dot 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes loading-dot {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Offline Indicator */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  animation: slide-down 0.3s ease;
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* ============================================
+   📊 ROI DASHBOARD STYLES
+   ============================================ */
+.roi-card {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(250, 245, 255, 0.95) 100%
+  );
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.roi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #a855f7, #ec4899);
+}
+
+.roi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(168, 85, 247, 0.15);
+}
+
+.roi-metric {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.roi-trend-up {
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.roi-trend-down {
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+/* ============================================
+   🎯 QR CODE STYLES
+   ============================================ */
+.qr-container {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(255, 255, 255, 1);
+  display: inline-block;
+}
+
+.qr-frame {
+  position: relative;
+  padding: 16px;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  border-radius: 16px;
+}
+
+.qr-frame::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: white;
+  border-radius: 12px;
+}
+
+/* ============================================
+   🌈 ENTERPRISE DARK MODE
+   ============================================ */
+.enterprise-dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+}
+
+.enterprise-dark .crystal-card {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.95) 0%,
+    rgba(30, 41, 59, 0.8) 100%
+  );
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.enterprise-dark .crystal-stat {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.95) 0%,
+    rgba(30, 41, 59, 0.85) 100%
+  );
+}
+
+/* ============================================
+   📱 RESPONSIVE CRYSTAL ADJUSTMENTS
+   ============================================ */
+@media (max-width: 768px) {
+  .crystal-card {
+    border-radius: 20px;
+  }
+  
+  .crystal-btn {
+    padding: 14px 24px;
+    border-radius: 14px;
+  }
+  
+  .crystal-modal {
+    border-radius: 24px;
+    padding: 24px;
+    margin: 16px;
+  }
+  
+  .roi-metric {
+    font-size: 36px;
+  }
+}
+
+/* ============================================
+   ✨ FINAL TOUCHES - MICRO-INTERACTIONS
+   ============================================ */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+/* Smooth Page Transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+/* ============================================
+   🎉 INDUSTRIAL-GRADE COMPLETE!
+   Built for reliability, beauty, and scale.
+   ============================================ */

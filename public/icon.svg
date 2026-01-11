@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E9D5FF"/>
+      <stop offset="50%" style="stop-color:#F5D0FE"/>
+      <stop offset="100%" style="stop-color:#DDD6FE"/>
+    </linearGradient>
+    
+    <!-- 3D Glass effect for left bear (warmer tone) -->
+    <linearGradient id="glassLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFE4C4;stop-opacity:0.9"/>
+      <stop offset="30%" style="stop-color:#DEB887;stop-opacity:0.7"/>
+      <stop offset="70%" style="stop-color:#D2A679;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#C4956A;stop-opacity:0.9"/>
+    </linearGradient>
+    
+    <!-- Glass highlight for left bear -->
+    <linearGradient id="glassHighlightLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.8"/>
+      <stop offset="50%" style="stop-color:#FFFFFF;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0"/>
+    </linearGradient>
+    
+    <!-- 3D Glass effect for right bear (cooler/honey tone) -->
+    <linearGradient id="glassRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF8DC;stop-opacity:0.9"/>
+      <stop offset="30%" style="stop-color:#F5DEB3;stop-opacity:0.7"/>
+      <stop offset="70%" style="stop-color:#E8D4A8;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#DEB887;stop-opacity:0.9"/>
+    </linearGradient>
+    
+    <!-- Glass highlight for right bear -->
+    <linearGradient id="glassHighlightRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#FFFFFF;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0"/>
+    </linearGradient>
+    
+    <!-- 3D Glass heart gradient -->
+    <linearGradient id="glassHeart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF69B4;stop-opacity:0.9"/>
+      <stop offset="30%" style="stop-color:#FF1493;stop-opacity:0.7"/>
+      <stop offset="70%" style="stop-color:#DB7093;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#C71585;stop-opacity:0.9"/>
+    </linearGradient>
+    
+    <!-- Heart glass highlight -->
+    <linearGradient id="heartHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9"/>
+      <stop offset="40%" style="stop-color:#FFFFFF;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0"/>
+    </linearGradient>
+    
+    <!-- Inner glow/reflection -->
+    <radialGradient id="innerGlow" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- Soft shadow filter -->
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#7C3AED" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Rounded Square Background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bgGradient)"/>
+  
+  <!-- Subtle inner border glow -->
+  <rect x="32" y="32" width="448" height="448" rx="80" ry="80" fill="none" stroke="white" stroke-width="3" opacity="0.6"/>
+  
+  <!-- LEFT TEDDY BEAR (3D Glass - Mocha) -->
+  <g filter="url(#softShadow)" transform="translate(-20, 0)">
+    <!-- Left Bear Body -->
+    <ellipse cx="200" cy="320" rx="70" ry="80" fill="url(#glassLeft)"/>
+    <ellipse cx="200" cy="320" rx="70" ry="80" fill="url(#innerGlow)"/>
+    <ellipse cx="185" cy="290" rx="35" ry="40" fill="url(#glassHighlightLeft)" opacity="0.6"/>
+    
+    <!-- Left Bear Head -->
+    <circle cx="200" cy="220" r="65" fill="url(#glassLeft)"/>
+    <circle cx="200" cy="220" r="65" fill="url(#innerGlow)"/>
+    <ellipse cx="180" cy="195" rx="30" ry="25" fill="url(#glassHighlightLeft)" opacity="0.5"/>
+    
+    <!-- Left Bear Ears with glass effect -->
+    <circle cx="150" cy="170" r="28" fill="url(#glassLeft)"/>
+    <circle cx="150" cy="170" r="28" fill="url(#innerGlow)" opacity="0.5"/>
+    <circle cx="150" cy="170" r="16" fill="#C4956A" opacity="0.7"/>
+    <ellipse cx="145" cy="162" rx="8" ry="6" fill="white" opacity="0.4"/>
+    
+    <circle cx="250" cy="170" r="28" fill="url(#glassLeft)"/>
+    <circle cx="250" cy="170" r="28" fill="url(#innerGlow)" opacity="0.5"/>
+    <circle cx="250" cy="170" r="16" fill="#C4956A" opacity="0.7"/>
+    <ellipse cx="245" cy="162" rx="8" ry="6" fill="white" opacity="0.4"/>
+    
+    <!-- Left Bear Snout - glass -->
+    <ellipse cx="200" cy="240" rx="25" ry="20" fill="#FFF5EB" opacity="0.85"/>
+    <ellipse cx="195" cy="233" rx="12" ry="8" fill="white" opacity="0.5"/>
+    
+    <!-- Left Bear Nose - shiny -->
+    <ellipse cx="200" cy="235" rx="10" ry="8" fill="#6B4423"/>
+    <ellipse cx="197" cy="232" rx="4" ry="3" fill="white" opacity="0.6"/>
+    
+    <!-- Left Bear Eyes - Closed happy -->
+    <path d="M175 210 Q185 220 195 210" stroke="#5D4037" stroke-width="4" fill="none" stroke-linecap="round"/>
+    
+    <!-- Left Bear Blush - soft glow -->
+    <ellipse cx="165" cy="230" rx="12" ry="8" fill="#F8A5C2" opacity="0.5"/>
+    
+    <!-- Left Bear Arm (hugging) with glass -->
+    <ellipse cx="260" cy="300" rx="30" ry="45" fill="url(#glassLeft)" transform="rotate(30, 260, 300)"/>
+    <ellipse cx="255" cy="285" rx="15" ry="20" fill="url(#glassHighlightLeft)" opacity="0.4" transform="rotate(30, 255, 285)"/>
+  </g>
+  
+  <!-- RIGHT TEDDY BEAR (3D Glass - Honey) -->
+  <g filter="url(#softShadow)" transform="translate(20, 0)">
+    <!-- Right Bear Body -->
+    <ellipse cx="312" cy="320" rx="70" ry="80" fill="url(#glassRight)"/>
+    <ellipse cx="312" cy="320" rx="70" ry="80" fill="url(#innerGlow)"/>
+    <ellipse cx="327" cy="290" rx="35" ry="40" fill="url(#glassHighlightRight)" opacity="0.6"/>
+    
+    <!-- Right Bear Head -->
+    <circle cx="312" cy="220" r="65" fill="url(#glassRight)"/>
+    <circle cx="312" cy="220" r="65" fill="url(#innerGlow)"/>
+    <ellipse cx="332" cy="195" rx="30" ry="25" fill="url(#glassHighlightRight)" opacity="0.5"/>
+    
+    <!-- Right Bear Ears with glass effect -->
+    <circle cx="262" cy="170" r="28" fill="url(#glassRight)"/>
+    <circle cx="262" cy="170" r="28" fill="url(#innerGlow)" opacity="0.5"/>
+    <circle cx="262" cy="170" r="16" fill="#D4A574" opacity="0.7"/>
+    <ellipse cx="257" cy="162" rx="8" ry="6" fill="white" opacity="0.4"/>
+    
+    <circle cx="362" cy="170" r="28" fill="url(#glassRight)"/>
+    <circle cx="362" cy="170" r="28" fill="url(#innerGlow)" opacity="0.5"/>
+    <circle cx="362" cy="170" r="16" fill="#D4A574" opacity="0.7"/>
+    <ellipse cx="357" cy="162" rx="8" ry="6" fill="white" opacity="0.4"/>
+    
+    <!-- Right Bear Snout - glass -->
+    <ellipse cx="312" cy="240" rx="25" ry="20" fill="#FFFAF0" opacity="0.85"/>
+    <ellipse cx="307" cy="233" rx="12" ry="8" fill="white" opacity="0.5"/>
+    
+    <!-- Right Bear Nose - shiny -->
+    <ellipse cx="312" cy="235" rx="10" ry="8" fill="#6B4423"/>
+    <ellipse cx="309" cy="232" rx="4" ry="3" fill="white" opacity="0.6"/>
+    
+    <!-- Right Bear Eyes - Closed happy -->
+    <path d="M317 210 Q327 220 337 210" stroke="#5D4037" stroke-width="4" fill="none" stroke-linecap="round"/>
+    
+    <!-- Right Bear Blush - soft glow -->
+    <ellipse cx="347" cy="230" rx="12" ry="8" fill="#F8A5C2" opacity="0.5"/>
+    
+    <!-- Right Bear Arm (hugging) with glass -->
+    <ellipse cx="252" cy="300" rx="30" ry="45" fill="url(#glassRight)" transform="rotate(-30, 252, 300)"/>
+    <ellipse cx="257" cy="285" rx="15" ry="20" fill="url(#glassHighlightRight)" opacity="0.4" transform="rotate(-30, 257, 285)"/>
+  </g>
+  
+  <!-- 3D GLASS HEART between them -->
+  <g transform="translate(256, 150)">
+    <!-- Heart shadow -->
+    <path d="M0 18 C0 -12, -28 -12, -28 12 C-28 28, 0 50, 0 50 C0 50, 28 28, 28 12 C28 -12, 0 -12, 0 18Z" 
+          fill="#000" opacity="0.15" transform="translate(3, 5)"/>
+    
+    <!-- Main heart with glass gradient -->
+    <path d="M0 15 C0 -10, -25 -10, -25 10 C-25 25, 0 45, 0 45 C0 45, 25 25, 25 10 C25 -10, 0 -10, 0 15Z" 
+          fill="url(#glassHeart)">
+      <animate attributeName="transform" 
+               values="scale(1);scale(1.08);scale(1)" 
+               dur="1.5s" 
+               repeatCount="indefinite"/>
+    </path>
+    
+    <!-- Heart glass highlight -->
+    <path d="M-8 5 C-8 -5, -18 -5, -18 5 C-18 10, -8 18, -8 18 C-8 18, 2 10, 2 5 C2 -5, -8 -5, -8 5Z" 
+          fill="url(#heartHighlight)" opacity="0.7" transform="translate(-2, -5) scale(0.6)">
+      <animate attributeName="transform" 
+               values="translate(-2, -5) scale(0.6);translate(-2, -5) scale(0.65);translate(-2, -5) scale(0.6)" 
+               dur="1.5s" 
+               repeatCount="indefinite"/>
+    </path>
+    
+    <!-- Small shine dot on heart -->
+    <ellipse cx="-10" cy="-2" rx="4" ry="3" fill="white" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0.5;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+  
+  <!-- Sparkles - glass-like -->
+  <g>
+    <circle cx="100" cy="120" r="6" fill="#A855F7" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="6;8;6" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="120" r="3" fill="white" opacity="0.8"/>
+    
+    <circle cx="412" cy="100" r="5" fill="#EC4899" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="412" cy="100" r="2" fill="white" opacity="0.7"/>
+    
+    <circle cx="80" cy="400" r="4" fill="#A855F7" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="80" cy="400" r="2" fill="white" opacity="0.6"/>
+    
+    <circle cx="432" cy="380" r="5" fill="#EC4899" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="432" cy="380" r="2" fill="white" opacity="0.7"/>
+  </g>
+</svg>

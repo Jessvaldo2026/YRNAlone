@@ -1,0 +1,178 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // 👤 USER PROFILES
+    // ============================================
+    match /users/{userId} {
+      // Users can read/write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Admins can read any user profile for management
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+
+      // Admins can update account status
+      allow update: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+
+      // User subcollections
+      match /moods/{moodId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /journal/{entryId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /guardianNotifications/{notifId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ============================================
+    // 👨‍👩‍👧 GUARDIAN LINKS
+    // ============================================
+    match /guardianLinks/{linkId} {
+      // Parents can read their own links
+      allow read: if request.auth != null &&
+        resource.data.parentId == request.auth.uid;
+
+      // Children can read links where they are the child
+      allow read: if request.auth != null &&
+        resource.data.childId == request.auth.uid;
+
+      // Parents can create link requests
+      allow create: if request.auth != null &&
+        request.resource.data.parentId == request.auth.uid;
+
+      // Parents can update their links (permissions)
+      allow update: if request.auth != null &&
+        resource.data.parentId == request.auth.uid;
+
+      // Children can update links (approve/deny/revoke)
+      allow update: if request.auth != null &&
+        resource.data.childId == request.auth.uid;
+    }
+
+    // ============================================
+    // 🔔 PARENT NOTIFICATIONS
+    // ============================================
+    match /parentNotifications/{notifId} {
+      // Parents can read their own notifications
+      allow read: if request.auth != null &&
+        resource.data.parentId == request.auth.uid;
+
+      // Parents can update (mark as read)
+      allow update: if request.auth != null &&
+        resource.data.parentId == request.auth.uid;
+
+      // System/authenticated users can create (for alerts)
+      allow create: if request.auth != null;
+    }
+
+    // ============================================
+    // 📋 PARENT ACCESS LOG
+    // ============================================
+    match /parentAccessLog/{logId} {
+      // Children can read their own access logs
+      allow read: if request.auth != null &&
+        resource.data.childId == request.auth.uid;
+
+      // Parents can create logs when viewing child data
+      allow create: if request.auth != null &&
+        request.resource.data.parentId == request.auth.uid;
+    }
+
+    // ============================================
+    // 🔒 ACCOUNT MANAGEMENT (Admin Only)
+    // ============================================
+    match /accountActionLog/{logId} {
+      // Only admins can read action logs
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+
+      // Admins can create action logs
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+    }
+
+    match /accountAppeals/{appealId} {
+      // Anyone can create an appeal (for banned users)
+      allow create: if true;
+
+      // Admins can read and update appeals
+      allow read, update: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+    }
+
+    match /accountUnlockRequests/{requestId} {
+      // Anyone can create an unlock request
+      allow create: if true;
+
+      // Admins can read and update requests
+      allow read, update: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+    }
+
+    // ============================================
+    // 🔐 GLOBAL AUDIT LOG
+    // ============================================
+    match /globalAuditLog/{logId} {
+      // Only admins can read
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOrgAdmin == true;
+
+      // Authenticated users can write (for logging)
+      allow create: if request.auth != null;
+    }
+
+    // ============================================
+    // 🏢 ORGANIZATIONS
+    // ============================================
+    match /organizations/{orgId} {
+      // Org admins can read/write their org
+      allow read, write: if request.auth != null &&
+        resource.data.adminIds.hasAny([request.auth.uid]);
+
+      // Members can read org data
+      allow read: if request.auth != null;
+
+      match /therapists/{therapistId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null &&
+          get(/databases/$(database)/documents/organizations/$(orgId)).data.adminIds.hasAny([request.auth.uid]);
+      }
+
+      match /members/{memberId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null &&
+          (request.auth.uid == memberId ||
+           get(/databases/$(database)/documents/organizations/$(orgId)).data.adminIds.hasAny([request.auth.uid]));
+      }
+
+      match /auditLog/{logId} {
+        allow read: if request.auth != null &&
+          get(/databases/$(database)/documents/organizations/$(orgId)).data.adminIds.hasAny([request.auth.uid]);
+        allow create: if request.auth != null;
+      }
+    }
+
+    // ============================================
+    // 👥 SUPPORT GROUPS
+    // ============================================
+    match /supportGroups/{groupId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ============================================
+    // 📝 DEFAULT - Authenticated access
+    // ============================================
+    // Fallback for other collections
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

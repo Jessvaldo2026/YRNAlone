@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(ls:*)",
+      "Bash(xargs:*)",
+      "Bash(done)",
+      "Bash(for func in \"PRICE_IDS\" \"createIndividualCheckout\" \"createOrganizationCheckout\")",
+      "Bash(do echo \"=== $func ===\")",
+      "Bash(for file in /Users/jacelinagoncalves/Desktop/YRNAlone/src/**/*.jsx)",
+      "Bash(do head -1 \"$file\")",
+      "Bash(node -c:*)",
+      "Bash(wc:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
