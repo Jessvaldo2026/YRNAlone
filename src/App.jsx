@@ -12465,12 +12465,35 @@ const AppWithAuth = () => {
   const [showOrgSignup, setShowOrgSignup] = useState(false);
   const [orgSignupComplete, setOrgSignupComplete] = useState(false);
 
-  // 🏢 Check if user is org ADMIN from BOTH sources (userProfile and EnterpriseContext)
-  // Note: Org MEMBERS (isOrgUser) should see regular app with branding, NOT admin dashboard
-  const isOrganizationAdmin = userProfile?.isOrgAdmin === true || isOrgAdmin === true;
+  // 🏢 Check if user is org ADMIN from ALL sources:
+  // 1. userProfile.isOrgAdmin === true (from Firestore user doc)
+  // 2. isOrgAdmin from EnterpriseContext (loaded from org doc)
+  // 3. Check if accountType is 'organization' AND isOrgAdmin is explicitly true
+  // Note: Org MEMBERS have accountType 'organization' but isOrgAdmin: false
+  const isOrganizationAdmin =
+    userProfile?.isOrgAdmin === true ||
+    isOrgAdmin === true ||
+    (userProfile?.accountType === 'organization' && userProfile?.isOrgAdmin !== false && userProfile?.role === 'admin');
 
   // 👨‍⚕️ Check if user is a THERAPIST (but NOT an admin)
   const isTherapistUser = (isTherapist || userProfile?.role === 'therapist' || userProfile?.isTherapist === true) && !isOrganizationAdmin;
+
+  // 🔍 Debug logging for org admin detection
+  useEffect(() => {
+    if (isLoggedIn && userProfile) {
+      console.log('🔍 AppWithAuth Debug:', {
+        isLoggedIn,
+        loading,
+        enterpriseLoading,
+        'userProfile?.isOrgAdmin': userProfile?.isOrgAdmin,
+        'userProfile?.accountType': userProfile?.accountType,
+        'userProfile?.role': userProfile?.role,
+        'isOrgAdmin (context)': isOrgAdmin,
+        'isOrganizationAdmin (computed)': isOrganizationAdmin,
+        'organization': organization?.name || null
+      });
+    }
+  }, [isLoggedIn, userProfile, loading, enterpriseLoading, isOrgAdmin, isOrganizationAdmin, organization]);
 
   if (loading) {
     return (
@@ -12542,6 +12565,20 @@ const AppWithAuth = () => {
       <NewAuthScreen
         onOrganizationSignup={() => setShowOrgSignup(true)}
       />
+    );
+  }
+
+  // 🔴 CRITICAL: If user has organizationId, wait for enterprise context to load
+  // This prevents the flash of user view before org admin detection completes
+  const mightBeOrgUser = userProfile?.organizationId || userProfile?.accountType === 'organization';
+  if (mightBeOrgUser && enterpriseLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl animate-bounce mb-4">🧸</div>
+          <p className="text-purple-600 font-medium">Loading YRNAlone...</p>
+        </div>
+      </div>
     );
   }
 
