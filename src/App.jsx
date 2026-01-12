@@ -16,6 +16,7 @@ import ParentDashboard from './components/ParentDashboard';
 import GuardianLinkManager from './components/GuardianLinkManager';
 import AdminUserManagement from './enterprise/AdminUserManagement';
 import NewAuthScreen from './auth/NewAuthScreen';
+import OrganizationApp from './OrganizationApp';
 
 // ============================================
 // 🎨 BEAUTIFUL APP THEMES - User Customization
@@ -12459,9 +12460,14 @@ case 'joinorg':
 
 // 💜 WRAPPER THAT HANDLES LOGIN
 const AppWithAuth = () => {
-  const { loading, isLoggedIn } = useAuth();
+  const { loading, isLoggedIn, userProfile } = useAuth();
+  const { isOrgAdmin, organization, loading: enterpriseLoading } = useEnterprise();
   const [showOrgSignup, setShowOrgSignup] = useState(false);
   const [orgSignupComplete, setOrgSignupComplete] = useState(false);
+
+  // 🏢 Check if user is org ADMIN from BOTH sources (userProfile and EnterpriseContext)
+  // Note: Org MEMBERS (isOrgUser) should see regular app with branding, NOT admin dashboard
+  const isOrganizationAdmin = userProfile?.isOrgAdmin === true || isOrgAdmin === true;
 
   if (loading) {
     return (
@@ -12536,6 +12542,39 @@ const AppWithAuth = () => {
     );
   }
 
+  // 🏢 ORGANIZATION ADMIN - Completely separate experience
+  // Check IMMEDIATELY after login, before any other rendering
+  if (isOrganizationAdmin) {
+    console.log('🏢 Rendering ORGANIZATION view for:', userProfile?.email);
+
+    // Wait for enterprise context to load org data
+    if (enterpriseLoading) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-5xl mb-4 animate-bounce">🏢</div>
+            <p className="text-purple-600 font-medium">Loading organization...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Create user object for OrganizationApp
+    const orgUser = {
+      uid: userProfile?.uid,
+      email: userProfile?.email,
+      name: userProfile?.name || userProfile?.displayName,
+      displayName: userProfile?.displayName || userProfile?.name,
+      organizationId: userProfile?.organizationId || organization?.id,
+      isOrgAdmin: true,
+      accountType: 'organization'
+    };
+
+    return <OrganizationApp user={orgUser} setUser={() => {}} />;
+  }
+
+  // 👤 INDIVIDUAL USER - Regular app experience
+  console.log('👤 Rendering INDIVIDUAL view for:', userProfile?.email);
   return <YRNAloneApp />;
 };
 

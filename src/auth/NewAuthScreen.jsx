@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import {
   Heart, Mail, Lock, User, Eye, EyeOff, ArrowLeft, Building2,
-  UserCircle, Shield, KeyRound, CheckCircle, ChevronDown, Users
+  UserCircle, Shield, KeyRound, CheckCircle, ChevronDown
 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import {
@@ -26,8 +26,11 @@ const ORG_TYPES = [
 ];
 
 const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
-  // Main view: 'main' | 'individual' | 'organization' | 'forgot' | 'joinWithCode'
+  // Main view: 'main' | 'individual' | 'organization' | 'forgot'
   const [view, setView] = useState('main');
+
+  // Organization Portal tab: 'login' | 'register' | 'join'
+  const [orgTab, setOrgTab] = useState('login');
 
   // Individual form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -45,12 +48,14 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
   const [newOrgAdminEmail, setNewOrgAdminEmail] = useState('');
   const [newOrgPassword, setNewOrgPassword] = useState('');
 
-  // 🎯 BUG 3: Join with Access Code state
+  // 🎯 Join with Access Code state
   const [accessCode, setAccessCode] = useState('');
   const [joinName, setJoinName] = useState('');
   const [joinEmail, setJoinEmail] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
   const [showJoinPwd, setShowJoinPwd] = useState(false);
+  const [isJoinNewUser, setIsJoinNewUser] = useState(true); // Toggle sign up vs sign in
+  const [verifiedOrg, setVerifiedOrg] = useState(null); // Org found after code verification
 
   // Forgot password
   const [forgotEmail, setForgotEmail] = useState('');
@@ -115,6 +120,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
         createdAt: serverTimestamp(),
         isPremium: false,
         isOrgAdmin: false,
+        accountType: 'individual',  // 🔴 CRITICAL: User type for routing
         organizationId: null,
         language: 'en',
         settings: {
@@ -242,6 +248,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
         name: newOrgAdminName,
         organizationId: orgId,
         isOrgAdmin: true,
+        accountType: 'organization',  // 🔴 CRITICAL: User type for routing
         isPremium: true,
         createdAt: serverTimestamp(),
         language: 'en'
@@ -282,25 +289,11 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
     setLoading(false);
   };
 
-  // 🎯 BUG 3 FIX: Handle Join Organization with Access Code
-  const handleJoinWithAccessCode = async (e) => {
-    e.preventDefault();
+  // Step 1: Verify access code and find organization
+  const handleVerifyAccessCode = async () => {
     setError('');
-
     if (!accessCode.trim()) {
       setError('Please enter an access code');
-      return;
-    }
-    if (!joinName.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-    if (!joinEmail.includes('@')) {
-      setError('Please enter a valid email address');
-      return;
-    }
-    if (joinPassword.length < 6) {
-      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -313,58 +306,118 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
       const orgSnap = await getDocs(orgQuery);
 
       if (orgSnap.empty) {
-        setError('Invalid access code. Please check and try again.');
+        setError('Invalid access code. Please check with your organization.');
         setLoading(false);
         return;
       }
 
       const orgDoc = orgSnap.docs[0];
       const orgData = orgDoc.data();
-      const orgId = orgDoc.id;
+      setVerifiedOrg({ id: orgDoc.id, ...orgData });
+      setError('');
+      console.log(`✅ Found organization: ${orgData.name}`);
+    } catch (err) {
+      setError('Error verifying code: ' + err.message);
+    }
+    setLoading(false);
+  };
 
-      // Create user account
-      const userCredential = await createUserWithEmailAndPassword(auth, joinEmail, joinPassword);
-      const user = userCredential.user;
+  // Step 2: Join organization (new user sign up OR existing user sign in)
+  const handleJoinWithAccessCode = async (e) => {
+    e.preventDefault();
+    setError('');
 
-      await updateProfile(user, { displayName: joinName });
+    if (!verifiedOrg) {
+      setError('Please verify your access code first');
+      return;
+    }
 
-      // Create user profile linked to organization (as member, not admin)
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: joinEmail,
-        displayName: joinName,
-        name: joinName,
-        organizationId: orgId,
-        isOrgAdmin: false,
-        isOrgMember: true,
-        isPremium: true, // Org members get premium access
-        createdAt: serverTimestamp(),
-        language: 'en',
-        joinedViaAccessCode: true,
-        settings: {
-          notifications: true,
-          highContrast: false,
-          textSize: 'medium'
-        },
-        stats: {
-          postsCreated: 0,
-          journalEntries: 0,
-          supportGiven: 0,
-          daysActive: 0
-        }
-      });
+    if (!joinEmail.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (joinPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (isJoinNewUser && !joinName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let userCredential;
+      const orgId = verifiedOrg.id;
+
+      if (isJoinNewUser) {
+        // NEW USER: Create account
+        userCredential = await createUserWithEmailAndPassword(auth, joinEmail, joinPassword);
+        await updateProfile(userCredential.user, { displayName: joinName });
+
+        // Create user profile linked to organization
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: joinEmail,
+          displayName: joinName,
+          name: joinName,
+          organizationId: orgId,
+          organizationName: verifiedOrg.name,
+          isOrgAdmin: false,
+          isOrgUser: true, // 🎯 Flag for org user
+          isOrgMember: true,
+          role: 'member',
+          isPremium: true, // Org members get premium access
+          createdAt: serverTimestamp(),
+          language: 'en',
+          joinedViaCode: accessCode.toUpperCase(),
+          joinedViaAccessCode: true,
+          accountType: 'organization',
+          settings: {
+            notifications: true,
+            highContrast: false,
+            textSize: 'medium'
+          },
+          stats: {
+            postsCreated: 0,
+            journalEntries: 0,
+            supportGiven: 0,
+            daysActive: 0
+          }
+        });
+      } else {
+        // EXISTING USER: Sign in and link to organization
+        userCredential = await signInWithEmailAndPassword(auth, joinEmail, joinPassword);
+
+        // Update user profile with organization link
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          organizationId: orgId,
+          organizationName: verifiedOrg.name,
+          isOrgAdmin: false,
+          isOrgUser: true, // 🎯 Flag for org user
+          isOrgMember: true,
+          role: 'member',
+          isPremium: true, // Org members get premium access
+          joinedViaCode: accessCode.toUpperCase(),
+          joinedViaAccessCode: true,
+          accountType: 'organization'
+        }, { merge: true });
+      }
 
       // Update organization member count
       await updateDoc(doc(db, 'organizations', orgId), {
-        memberCount: (orgData.memberCount || 1) + 1
+        memberCount: (verifiedOrg.memberCount || 1) + 1
       });
 
-      console.log(`✅ User joined ${orgData.name} via access code`);
+      console.log(`✅ User joined ${verifiedOrg.name} via access code`);
       onSuccess?.();
     } catch (err) {
-      if (err.code === 'auth/email-already-in-use') setError('An account with this email already exists');
+      if (err.code === 'auth/email-already-in-use') setError('An account with this email already exists. Try signing in instead.');
       else if (err.code === 'auth/invalid-email') setError('Invalid email address');
       else if (err.code === 'auth/weak-password') setError('Password is too weak');
+      else if (err.code === 'auth/user-not-found') setError('No account found with this email. Try creating a new account.');
+      else if (err.code === 'auth/wrong-password') setError('Incorrect password');
       else setError(err.message || 'Failed to join organization');
     }
     setLoading(false);
@@ -602,16 +655,16 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
   }
 
   // ============================================
-  // 🏢 ORGANIZATION - Side by Side Admin Login / Register
+  // 🏢 ORGANIZATION PORTAL - 3-Tab Layout
   // ============================================
   if (view === 'organization') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-4xl">
           {/* Back Button & Header */}
           <div className="text-center mb-6">
             <button
-              onClick={() => { setView('main'); setError(''); }}
+              onClick={() => { setView('main'); setError(''); setVerifiedOrg(null); }}
               className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center gap-2 text-blue-600 font-medium hover:underline"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -623,13 +676,48 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
             <h1 className="text-2xl font-bold text-gray-800">🏢 Organization Portal</h1>
           </div>
 
-          {/* Side by Side Forms */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* ADMIN SIGN IN Column */}
-            <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
-              <h2 className="text-xl font-bold text-center text-gray-800 mb-6 pb-3 border-b">ADMIN SIGN IN</h2>
+          {/* 3 Tab Buttons */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => { setOrgTab('login'); setError(''); }}
+              className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+                orgTab === 'login'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-600 hover:bg-white'
+              }`}
+            >
+              Admin Login
+            </button>
+            <button
+              onClick={() => { setOrgTab('register'); setError(''); }}
+              className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+                orgTab === 'register'
+                  ? 'bg-indigo-500 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-600 hover:bg-white'
+              }`}
+            >
+              Register Org
+            </button>
+            <button
+              onClick={() => { setOrgTab('join'); setError(''); setVerifiedOrg(null); }}
+              className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+                orgTab === 'join'
+                  ? 'bg-green-500 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-600 hover:bg-white'
+              }`}
+            >
+              Join with Code
+            </button>
+          </div>
 
-              <form onSubmit={handleOrgSignIn} className="space-y-4">
+          {/* TAB 1: Admin Login */}
+          {orgTab === 'login' && (
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
+              <h2 className="text-xl font-bold text-center text-gray-800 mb-6 pb-3 border-b flex items-center justify-center gap-2">
+                <Shield className="w-5 h-5 text-blue-500" /> Admin Sign In
+              </h2>
+
+              <form onSubmit={handleOrgSignIn} className="space-y-4 max-w-md mx-auto">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Admin Email</label>
                   <div className="relative">
@@ -667,6 +755,12 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                   </div>
                 </div>
 
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                    {error}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -698,12 +792,16 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                 </span>
               </div>
             </div>
+          )}
 
-            {/* REGISTER NEW ORG Column */}
-            <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
-              <h2 className="text-xl font-bold text-center text-gray-800 mb-6 pb-3 border-b">REGISTER NEW ORG</h2>
+          {/* TAB 2: Register New Org */}
+          {orgTab === 'register' && (
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
+              <h2 className="text-xl font-bold text-center text-gray-800 mb-6 pb-3 border-b flex items-center justify-center gap-2">
+                <Building2 className="w-5 h-5 text-indigo-500" /> Register New Organization
+              </h2>
 
-              <form onSubmit={handleOrgRegister} className="space-y-4">
+              <form onSubmit={handleOrgRegister} className="space-y-4 max-w-md mx-auto">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
                   <div className="relative">
@@ -712,7 +810,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                       type="text"
                       value={newOrgName}
                       onChange={(e) => setNewOrgName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none"
                       placeholder="Your Organization Name"
                       required
                     />
@@ -725,7 +823,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                     <select
                       value={newOrgType}
                       onChange={(e) => setNewOrgType(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none appearance-none bg-white"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none appearance-none bg-white"
                     >
                       {ORG_TYPES.map(type => (
                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -743,7 +841,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                       type="text"
                       value={newOrgAdminName}
                       onChange={(e) => setNewOrgAdminName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none"
                       placeholder="Your name"
                       required
                     />
@@ -758,7 +856,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                       type="email"
                       value={newOrgAdminEmail}
                       onChange={(e) => setNewOrgAdminEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none"
                       placeholder="admin@organization.com"
                       required
                     />
@@ -773,7 +871,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                       type={showOrgRegPwd ? 'text' : 'password'}
                       value={newOrgPassword}
                       onChange={(e) => setNewOrgPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none"
+                      className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-400 focus:outline-none"
                       placeholder="At least 6 characters"
                       required
                       minLength={6}
@@ -788,15 +886,21 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                   </div>
                 </div>
 
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                    {error}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <>🏢 Register Org</>
+                    <>🏢 Register Organization</>
                   )}
                 </button>
               </form>
@@ -805,154 +909,191 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
                 14-day free trial • No credit card required
               </p>
             </div>
-          </div>
+          )}
 
-          {/* 🎯 BUG 3 FIX: Join with Access Code Button */}
-          <div className="mt-6">
-            <div className="relative flex items-center justify-center mb-4">
-              <div className="border-t border-gray-300 flex-1"></div>
-              <span className="px-4 text-gray-500 text-sm">or</span>
-              <div className="border-t border-gray-300 flex-1"></div>
-            </div>
-            <button
-              onClick={() => { setView('joinWithCode'); setError(''); }}
-              className="w-full p-4 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition shadow-lg"
-            >
-              <Users className="w-5 h-5" />
-              Join Organization with Access Code
-            </button>
-            <p className="text-center text-xs text-gray-500 mt-2">
-              For employees, patients, or students with an organization access code
-            </p>
-          </div>
+          {/* TAB 3: Join with Access Code */}
+          {orgTab === 'join' && (
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
+              <h2 className="text-xl font-bold text-center text-gray-800 mb-2 flex items-center justify-center gap-2">
+                <KeyRound className="w-5 h-5 text-green-500" /> Join Your Organization
+              </h2>
+              <p className="text-gray-500 text-center mb-6 text-sm">
+                Enter the access code from your clinic, school, or company
+              </p>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
-              {error}
+              <div className="max-w-md mx-auto">
+                {/* Step 1: Enter and Verify Access Code */}
+                {!verifiedOrg ? (
+                  <>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Access Code</label>
+                      <div className="relative">
+                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={accessCode}
+                          onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                          className="w-full pl-10 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-green-400 focus:outline-none text-center font-mono text-2xl tracking-widest uppercase"
+                          placeholder="ABC123XY"
+                          maxLength={10}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 text-center">Code from your organization admin</p>
+                    </div>
+
+                    {error && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm mb-4">
+                        {error}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleVerifyAccessCode}
+                      disabled={loading || !accessCode.trim()}
+                      className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>Verify Code</>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  /* Step 2: Organization Found - Sign Up or Sign In */
+                  <>
+                    {/* Organization Found Banner */}
+                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        <div>
+                          <p className="text-green-700 font-bold">Organization Found!</p>
+                          <p className="text-green-600">{verifiedOrg.name}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toggle New User / Existing User */}
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => { setIsJoinNewUser(true); setError(''); }}
+                        className={`flex-1 py-2 rounded-lg font-medium transition ${
+                          isJoinNewUser
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        New User
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setIsJoinNewUser(false); setError(''); }}
+                        className={`flex-1 py-2 rounded-lg font-medium transition ${
+                          !isJoinNewUser
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Existing User
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleJoinWithAccessCode} className="space-y-4">
+                      {/* Name field - only for new users */}
+                      {isJoinNewUser && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Your Full Name</label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                              type="text"
+                              value={joinName}
+                              onChange={(e) => setJoinName(e.target.value)}
+                              className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-400 focus:outline-none"
+                              placeholder="Your full name"
+                              required
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <input
+                            type="email"
+                            value={joinEmail}
+                            onChange={(e) => setJoinEmail(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-400 focus:outline-none"
+                            placeholder="your@email.com"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {isJoinNewUser ? 'Create Password' : 'Password'}
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <input
+                            type={showJoinPwd ? 'text' : 'password'}
+                            value={joinPassword}
+                            onChange={(e) => setJoinPassword(e.target.value)}
+                            className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-green-400 focus:outline-none"
+                            placeholder={isJoinNewUser ? 'At least 6 characters' : '••••••••'}
+                            required
+                            minLength={6}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowJoinPwd(!showJoinPwd)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          >
+                            {showJoinPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>{isJoinNewUser ? '✨ Create Account & Join' : '🔑 Sign In & Join'}</>
+                        )}
+                      </button>
+                    </form>
+
+                    {/* Back to change code */}
+                    <button
+                      type="button"
+                      onClick={() => { setVerifiedOrg(null); setError(''); }}
+                      className="w-full mt-3 text-gray-500 text-sm hover:underline"
+                    >
+                      Use a different access code
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <p className="mt-4 text-center text-xs text-gray-500">
+                For employees, patients, or students with an organization access code
+              </p>
             </div>
           )}
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // 🎯 BUG 3 FIX: JOIN WITH ACCESS CODE
-  // ============================================
-  if (view === 'joinWithCode') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-100 via-teal-50 to-blue-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl">
-          <button
-            onClick={() => { setView('organization'); setError(''); }}
-            className="flex items-center gap-2 text-teal-600 font-medium mb-6 hover:underline"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Organization Portal
-          </button>
-
-          <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Users className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Join Your Organization</h1>
-            <p className="text-gray-500 mt-2">Enter the access code provided by your organization</p>
-          </div>
-
-          <form onSubmit={handleJoinWithAccessCode} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Access Code</label>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none text-center font-mono text-lg tracking-widest uppercase"
-                  placeholder="XXXXXXXX"
-                  maxLength={8}
-                  required
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">8-character code from your organization admin</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={joinName}
-                  onChange={(e) => setJoinName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
-                  placeholder="Your full name"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={joinEmail}
-                  onChange={(e) => setJoinEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type={showJoinPwd ? 'text' : 'password'}
-                  value={joinPassword}
-                  onChange={(e) => setJoinPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-400 focus:outline-none"
-                  placeholder="At least 6 characters"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowJoinPwd(!showJoinPwd)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                >
-                  {showJoinPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>✅ Join Organization</>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-4 text-center text-xs text-gray-500">
-            By joining, you agree to our Terms of Service and Privacy Policy
-          </p>
         </div>
       </div>
     );
