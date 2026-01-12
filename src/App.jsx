@@ -12461,13 +12461,16 @@ case 'joinorg':
 // 💜 WRAPPER THAT HANDLES LOGIN
 const AppWithAuth = () => {
   const { loading, isLoggedIn, userProfile } = useAuth();
-  const { isOrgAdmin, organization, loading: enterpriseLoading } = useEnterprise();
+  const { isOrgAdmin, organization, isTherapist, therapistId, loading: enterpriseLoading } = useEnterprise();
   const [showOrgSignup, setShowOrgSignup] = useState(false);
   const [orgSignupComplete, setOrgSignupComplete] = useState(false);
 
   // 🏢 Check if user is org ADMIN from BOTH sources (userProfile and EnterpriseContext)
   // Note: Org MEMBERS (isOrgUser) should see regular app with branding, NOT admin dashboard
   const isOrganizationAdmin = userProfile?.isOrgAdmin === true || isOrgAdmin === true;
+
+  // 👨‍⚕️ Check if user is a THERAPIST (but NOT an admin)
+  const isTherapistUser = (isTherapist || userProfile?.role === 'therapist' || userProfile?.isTherapist === true) && !isOrganizationAdmin;
 
   if (loading) {
     return (
@@ -12571,6 +12574,31 @@ const AppWithAuth = () => {
     };
 
     return <OrganizationApp user={orgUser} setUser={() => {}} />;
+  }
+
+  // 👨‍⚕️ THERAPIST - Dedicated therapist dashboard experience
+  // Check AFTER org admin (so admins who are also therapists go to admin view)
+  if (isTherapistUser && organization) {
+    console.log('👨‍⚕️ Rendering THERAPIST view for:', userProfile?.email);
+
+    // Wait for enterprise context to load org data
+    if (enterpriseLoading) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-cyan-50 to-teal-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-5xl mb-4 animate-bounce">👨‍⚕️</div>
+            <p className="text-blue-600 font-medium">Loading therapist dashboard...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <TherapistDashboard
+        organizationId={userProfile?.organizationId || organization?.id}
+        therapistId={therapistId}
+      />
+    );
   }
 
   // 👤 INDIVIDUAL USER - Regular app experience

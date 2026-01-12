@@ -1,16 +1,16 @@
 // FILE: src/enterprise/AdminDashboard.jsx
 // 🏢 Full Enterprise Admin Dashboard
 
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState, useEffect, useRef } from 'react';
+import {
   Users, Settings, BarChart3, CreditCard, Copy, Check,
   Building2, UserPlus, FileText, ArrowLeft, Download,
   Bell, Shield, Calendar, Activity, TrendingUp, TrendingDown,
   AlertTriangle, Printer, X, Plus, Edit, Trash2,
-  RefreshCw, Search
+  RefreshCw, Search, MoreVertical
 } from 'lucide-react';
 import { db, auth } from '../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useEnterprise } from './EnterpriseContext';
 
 // ✅ Import from services folder
@@ -41,6 +41,10 @@ const AdminDashboard = ({ organizationId, onBack }) => {
   const [editingTherapist, setEditingTherapist] = useState(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // 🎯 Member management states
+  const [selectedMemberForAssign, setSelectedMemberForAssign] = useState(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   const orgId = organizationId || organization?.id;
 
@@ -291,7 +295,7 @@ const AdminDashboard = ({ organizationId, onBack }) => {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-800">Members ({members.length})</h3>
+                <h3 className="font-bold text-gray-800 text-xl">👥 Members ({members.length})</h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -304,19 +308,79 @@ const AdminDashboard = ({ organizationId, onBack }) => {
                 </div>
               </div>
             </div>
-            <div className="divide-y max-h-96 overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto">
               {members.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No members yet. Share your access code to invite members.</p>
+                <div className="p-12 text-center">
+                  <div className="text-5xl mb-4">👥</div>
+                  <h4 className="font-bold text-gray-800 mb-2">No members yet</h4>
+                  <p className="text-gray-600 mb-4">Share your access code to invite members</p>
+                  <div className="bg-purple-50 rounded-xl p-4 inline-block">
+                    <p className="text-sm text-purple-600 mb-1">Your Access Code:</p>
+                    <p className="font-mono font-bold text-2xl text-purple-800 tracking-widest">
+                      {organization?.accessCode || 'Loading...'}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 members
-                  .filter(m => !searchQuery || (m.name || m.username || '').toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map(member => <MemberRow key={member.id} member={member} therapists={therapists} />)
+                  .filter(m => !searchQuery || (m.name || m.displayName || m.username || '').toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map(member => (
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      therapists={therapists}
+                      onAssignTherapist={(m) => {
+                        setSelectedMemberForAssign(m);
+                        setShowAssignModal(true);
+                      }}
+                      onBlockMember={async (m) => {
+                        if (confirm(`Suspend ${m.name || m.displayName}? They will not be able to access the app.`)) {
+                          try {
+                            await updateDoc(doc(db, 'users', m.id || m.uid), { suspended: true });
+                            loadDashboardData();
+                          } catch (err) {
+                            alert('Error: ' + err.message);
+                          }
+                        }
+                      }}
+                      onRemoveMember={async (m) => {
+                        if (confirm(`Remove ${m.name || m.displayName} from your organization? This cannot be undone.`)) {
+                          try {
+                            await updateDoc(doc(db, 'users', m.id || m.uid), {
+                              organizationId: null,
+                              isOrgMember: false,
+                              isOrgUser: false
+                            });
+                            loadDashboardData();
+                          } catch (err) {
+                            alert('Error: ' + err.message);
+                          }
+                        }
+                      }}
+                      onRefresh={loadDashboardData}
+                    />
+                  ))
               )}
             </div>
           </div>
+        )}
+
+        {/* Assign Therapist Modal */}
+        {showAssignModal && selectedMemberForAssign && (
+          <AssignTherapistModal
+            member={selectedMemberForAssign}
+            therapists={therapists}
+            orgId={orgId}
+            onAssign={() => {
+              loadDashboardData();
+              setShowAssignModal(false);
+              setSelectedMemberForAssign(null);
+            }}
+            onClose={() => {
+              setShowAssignModal(false);
+              setSelectedMemberForAssign(null);
+            }}
+          />
         )}
 
         {/* THERAPISTS */}
@@ -464,19 +528,216 @@ const QuickAction = ({ icon: Icon, label, color, onClick, loading, badge }) => {
   );
 };
 
-const MemberRow = ({ member, therapists }) => {
+// 🎯 Enhanced MemberRow with 3-dot menu for actions
+const MemberRow = ({ member, therapists, onAssignTherapist, onBlockMember, onRemoveMember, onRefresh }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
   const lastActive = new Date(member.lastActive || member.createdAt);
   const isActive = (new Date() - lastActive) < 7 * 24 * 60 * 60 * 1000;
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className="p-4 flex items-center gap-4 hover:bg-gray-50">
-      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-lg">😊</div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-800 truncate">{member.name || member.username}</p>
-        <p className="text-sm text-gray-500 truncate">{member.email}</p>
+    <div className="p-4 flex items-center gap-4 hover:bg-gray-50 border-b last:border-b-0">
+      {/* Member Avatar */}
+      <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
+        {(member.name || member.displayName || member.username || '?').charAt(0).toUpperCase()}
       </div>
-      <span className={`px-2 py-1 text-xs rounded-full ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-        {isActive ? 'Active' : 'Inactive'}
-      </span>
+
+      {/* Member Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-800 truncate">{member.name || member.displayName || member.username || 'Unknown'}</p>
+        <p className="text-sm text-gray-500 truncate">{member.email}</p>
+        {member.assignedTherapist && (
+          <p className="text-xs text-purple-600 mt-0.5 flex items-center gap-1">
+            <span>👨‍⚕️</span> {member.assignedTherapist}
+          </p>
+        )}
+      </div>
+
+      {/* Status Badges */}
+      <div className="flex items-center gap-2">
+        <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+          isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+        }`}>
+          {isActive ? '🟢 Active' : '⚪ Inactive'}
+        </span>
+
+        {member.riskLevel === 'high' && (
+          <span className="px-3 py-1 text-xs rounded-full font-medium bg-red-100 text-red-700">
+            🚨 High Risk
+          </span>
+        )}
+
+        {/* 3-Dot Menu */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition"
+          >
+            <span className="text-xl leading-none">⋮</span>
+          </button>
+
+          {showMenu && (
+            <div className="absolute right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 py-2 min-w-[180px] animate-fade-in">
+              <button
+                onClick={() => { onAssignTherapist?.(member); setShowMenu(false); }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+              >
+                👨‍⚕️ Assign Therapist
+              </button>
+              <button
+                onClick={() => { window.open(`/member/${member.id || member.uid}`, '_blank'); setShowMenu(false); }}
+                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+              >
+                👁️ View Profile
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                onClick={() => setShowMenu(false)}
+              >
+                ✏️ Edit Details
+              </button>
+              <hr className="my-2" />
+              <button
+                onClick={() => { onBlockMember?.(member); setShowMenu(false); }}
+                className="w-full text-left px-4 py-2 hover:bg-red-50 text-orange-600 flex items-center gap-2"
+              >
+                🔕 Suspend Member
+              </button>
+              <button
+                onClick={() => { onRemoveMember?.(member); setShowMenu(false); }}
+                className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2"
+              >
+                🗑️ Remove Member
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 🎯 Assign Therapist Modal
+const AssignTherapistModal = ({ member, therapists, onAssign, onClose, orgId }) => {
+  const [selectedTherapist, setSelectedTherapist] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAssign = async () => {
+    if (!selectedTherapist) return;
+
+    setSaving(true);
+    const therapist = therapists.find(t => t.id === selectedTherapist);
+
+    try {
+      // Update member document with assigned therapist
+      await updateDoc(doc(db, 'users', member.id || member.uid), {
+        assignedTherapistId: selectedTherapist,
+        assignedTherapist: therapist.name
+      });
+
+      // Create audit log
+      await addDoc(collection(db, 'auditLog'), {
+        action: 'ASSIGN_THERAPIST',
+        memberId: member.id || member.uid,
+        memberName: member.name || member.displayName,
+        therapistId: selectedTherapist,
+        therapistName: therapist.name,
+        organizationId: orgId,
+        timestamp: serverTimestamp()
+      });
+
+      onAssign?.();
+      onClose();
+    } catch (error) {
+      console.error('Error assigning therapist:', error);
+      alert('Failed to assign therapist: ' + error.message);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+          👨‍⚕️ Assign Therapist
+        </h3>
+        <p className="text-gray-600 mb-4">
+          Select a therapist for <span className="font-medium">{member.name || member.displayName}</span>
+        </p>
+
+        {therapists.length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-xl mb-4">
+            <p className="text-4xl mb-2">👨‍⚕️</p>
+            <p className="text-gray-600 font-medium">No therapists available</p>
+            <p className="text-gray-500 text-sm">Add therapists first to assign them</p>
+          </div>
+        ) : (
+          <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+            {therapists.map(t => (
+              <label
+                key={t.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  selectedTherapist === t.id
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="therapist"
+                  value={t.id}
+                  checked={selectedTherapist === t.id}
+                  onChange={() => setSelectedTherapist(t.id)}
+                  className="sr-only"
+                />
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-lg">
+                  👨‍⚕️
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">{t.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {t.specialties?.slice(0, 2).join(', ') || 'General'}
+                    {t.caseload !== undefined && ` • ${t.caseload}/15 patients`}
+                  </p>
+                </div>
+                {t.caseload >= 15 && (
+                  <span className="text-xs text-red-500 font-medium">Full</span>
+                )}
+                {selectedTherapist === t.id && (
+                  <Check className="w-5 h-5 text-purple-500" />
+                )}
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleAssign}
+            disabled={!selectedTherapist || saving || therapists.length === 0}
+            className="flex-1 bg-purple-500 text-white py-3 rounded-xl font-bold hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {saving ? 'Assigning...' : 'Assign'}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-300 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
