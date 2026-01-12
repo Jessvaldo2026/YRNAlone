@@ -115,14 +115,17 @@ const AdminDashboard = ({ organizationId, onBack }) => {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'members', label: 'Members', icon: Users },
-    { id: 'therapists', label: 'Therapists', icon: UserPlus },
-    { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'alerts', label: 'Alerts', icon: Bell, badge: dashboardData?.alerts?.totalAlerts },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'overview', label: 'Overview', icon: BarChart3, mobileIcon: '📊' },
+    { id: 'members', label: 'Members', icon: Users, mobileIcon: '👥' },
+    { id: 'therapists', label: 'Therapists', icon: UserPlus, mobileIcon: '👨‍⚕️' },
+    { id: 'reports', label: 'Reports', icon: FileText, mobileIcon: '📋' },
+    { id: 'alerts', label: 'Alerts', icon: Bell, badge: dashboardData?.alerts?.totalAlerts, mobileIcon: '🔔' },
+    { id: 'billing', label: 'Billing', icon: CreditCard, mobileIcon: '💳' },
+    { id: 'settings', label: 'Settings', icon: Settings, mobileIcon: '⚙️' }
   ];
+
+  // Mobile tabs (show fewer on mobile)
+  const mobileTabs = tabs.slice(0, 5); // Show first 5 tabs on mobile
 
   const engagement = dashboardData?.engagement || {};
   const moodAnalytics = dashboardData?.moodAnalytics || {};
@@ -142,29 +145,29 @@ const AdminDashboard = ({ organizationId, onBack }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div 
-        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6"
-        style={branding?.primaryColor ? { 
+      <div
+        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 md:p-6"
+        style={branding?.primaryColor ? {
           background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.primaryColor}cc)`
         } : {}}
       >
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               {onBack && (
                 <button onClick={onBack} className="p-2 rounded-full bg-white/20 hover:bg-white/30">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 {branding?.logo ? (
-                  <img src={branding.logo} alt="" className="h-12 w-auto" />
+                  <img src={branding.logo} alt="" className="h-8 md:h-12 w-auto" />
                 ) : (
-                  <Building2 className="w-12 h-12" />
+                  <Building2 className="w-8 h-8 md:w-12 md:h-12" />
                 )}
                 <div>
-                  <h1 className="text-2xl font-bold">{organization?.name || 'Organization'}</h1>
-                  <p className="text-white/80">Enterprise Admin Dashboard</p>
+                  <h1 className="text-lg md:text-2xl font-bold truncate max-w-[150px] md:max-w-none">{organization?.name || 'Organization'}</h1>
+                  <p className="text-white/80 text-xs md:text-base hidden md:block">Enterprise Admin Dashboard</p>
                 </div>
               </div>
             </div>
@@ -224,7 +227,7 @@ const AdminDashboard = ({ organizationId, onBack }) => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6">
         
         {/* OVERVIEW */}
         {activeTab === 'overview' && (
@@ -293,9 +296,9 @@ const AdminDashboard = ({ organizationId, onBack }) => {
         {/* MEMBERS */}
         {activeTab === 'members' && (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-gray-800 text-xl">👥 Members ({members.length})</h3>
+            <div className="p-4 md:p-6 border-b">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <h3 className="font-bold text-gray-800 text-lg md:text-xl">👥 Members ({members.length})</h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -303,7 +306,7 @@ const AdminDashboard = ({ organizationId, onBack }) => {
                     placeholder="Search members..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border rounded-xl focus:border-purple-400 focus:outline-none"
+                    className="w-full md:w-auto pl-10 pr-4 py-2 border rounded-xl focus:border-purple-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -500,6 +503,32 @@ const AdminDashboard = ({ organizationId, onBack }) => {
           </div>
         )}
       </div>
+
+      {/* 📱 MOBILE BOTTOM NAVIGATION */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+        <div className="flex justify-around py-2">
+          {mobileTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center p-2 min-w-0 ${
+                activeTab === tab.id ? 'text-purple-600' : 'text-gray-500'
+              }`}
+            >
+              <span className="text-xl">{tab.mobileIcon}</span>
+              <span className="text-xs mt-1 truncate">{tab.label}</span>
+              {tab.badge > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Spacer for mobile nav */}
+      <div className="md:hidden h-20"></div>
     </div>
   );
 };

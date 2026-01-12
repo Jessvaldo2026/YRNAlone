@@ -150,7 +150,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
   };
 
   // Handle Organization Admin Sign In
-  // 🎯 BUG 1 FIX: Check if user is org admin and set redirect flag
+  // 🎯 BUG 1 FIX: Check if user is org admin, fix missing fields, and set redirect flag
   const handleOrgSignIn = async (e) => {
     e.preventDefault();
     setError('');
@@ -159,16 +159,36 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, orgLoginEmail, orgLoginPassword);
 
-      // 🎯 BUG 1 FIX: Check if user is an org admin and set redirect flag
+      // 🎯 BUG 1 FIX: Verify this user is an org admin and fix any missing fields
       try {
         const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
         const userData = userDoc.data();
 
-        if (userData?.isOrgAdmin && userData?.organizationId) {
-          // Set flag for redirect to admin dashboard
-          sessionStorage.setItem('pendingAdminRedirect', 'true');
-          console.log('🏢 Org admin logged in, setting redirect flag');
+        // Check if user has org admin permissions
+        if (!userData?.isOrgAdmin && !userData?.organizationId) {
+          setError('This account is not an organization admin. Please use individual sign in.');
+          await auth.signOut();
+          setLoading(false);
+          return;
         }
+
+        // 🔴 CRITICAL: If old account is missing fields, add them now
+        const needsUpdate = !userData.accountType || !userData.role || userData.role !== 'admin';
+        if (needsUpdate && userData.isOrgAdmin) {
+          console.log('🔧 Fixing missing org admin fields for:', userData.email);
+          await updateDoc(doc(db, 'users', userCredential.user.uid), {
+            isOrgAdmin: true,
+            accountType: 'organization',
+            role: 'admin'
+          });
+        }
+
+        // Set flag for redirect to admin dashboard
+        sessionStorage.setItem('pendingAdminRedirect', 'true');
+        console.log('🏢 Org admin logged in:', userData.email);
+        console.log('   - isOrgAdmin:', userData.isOrgAdmin);
+        console.log('   - accountType:', userData.accountType);
+        console.log('   - role:', userData.role || '(being fixed)');
       } catch (checkErr) {
         console.log('Could not check admin status:', checkErr);
       }
@@ -177,6 +197,7 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
     } catch (err) {
       if (err.code === 'auth/user-not-found') setError('No admin account found');
       else if (err.code === 'auth/wrong-password') setError('Incorrect password');
+      else if (err.code === 'auth/invalid-credential') setError('Invalid email or password');
       else setError(err.message || 'Sign in failed');
     }
     setLoading(false);
@@ -240,19 +261,30 @@ const NewAuthScreen = ({ onSuccess, onOrganizationSignup }) => {
         }
       });
 
-      // Create admin user profile
+      // Create admin user profile with ALL CRITICAL FIELDS
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: newOrgAdminEmail,
         displayName: newOrgAdminName,
         name: newOrgAdminName,
         organizationId: orgId,
+        organizationName: newOrgName,
+        // 🔴 CRITICAL FIELDS FOR ORG ADMIN ROUTING:
         isOrgAdmin: true,
-        accountType: 'organization',  // 🔴 CRITICAL: User type for routing
+        accountType: 'organization',
+        role: 'admin',
+        // Other fields
         isPremium: true,
         createdAt: serverTimestamp(),
-        language: 'en'
+        language: 'en',
+        onboardingCompleted: true // Org admins skip user onboarding
       });
+
+      console.log('✅ Org admin created with fields:');
+      console.log('   - isOrgAdmin: true');
+      console.log('   - accountType: organization');
+      console.log('   - role: admin');
+      console.log('   - organizationId:', orgId);
 
       // 🎯 BUG 1 FIX: Set redirect flag for new org admin
       sessionStorage.setItem('pendingAdminRedirect', 'true');

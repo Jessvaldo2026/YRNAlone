@@ -17,6 +17,11 @@ import GuardianLinkManager from './components/GuardianLinkManager';
 import AdminUserManagement from './enterprise/AdminUserManagement';
 import NewAuthScreen from './auth/NewAuthScreen';
 import OrganizationApp from './OrganizationApp';
+import Onboarding from './components/Onboarding';
+import NotificationSettings from './components/NotificationSettings';
+import ExportDataSection from './components/ExportDataSection';
+import DeleteAccountSection from './components/DeleteAccountSection';
+import { FullPageLoader, SkeletonCard, SkeletonListItem, Spinner, LoadingButton } from './components/LoadingStates';
 
 // ============================================
 // 🎨 BEAUTIFUL APP THEMES - User Customization
@@ -12465,15 +12470,18 @@ const AppWithAuth = () => {
   const [showOrgSignup, setShowOrgSignup] = useState(false);
   const [orgSignupComplete, setOrgSignupComplete] = useState(false);
 
-  // 🏢 Check if user is org ADMIN from ALL sources:
+  // 🏢 BULLETPROOF ORG ADMIN CHECK - Check ALL possible fields
   // 1. userProfile.isOrgAdmin === true (from Firestore user doc)
   // 2. isOrgAdmin from EnterpriseContext (loaded from org doc)
-  // 3. Check if accountType is 'organization' AND isOrgAdmin is explicitly true
+  // 3. Check if accountType is 'organization' AND role is 'admin'
+  // 4. Check if user has organizationId AND isOrgAdmin is explicitly true
   // Note: Org MEMBERS have accountType 'organization' but isOrgAdmin: false
   const isOrganizationAdmin =
     userProfile?.isOrgAdmin === true ||
     isOrgAdmin === true ||
-    (userProfile?.accountType === 'organization' && userProfile?.isOrgAdmin !== false && userProfile?.role === 'admin');
+    userProfile?.role === 'admin' ||
+    (userProfile?.accountType === 'organization' && userProfile?.isOrgAdmin !== false && userProfile?.role === 'admin') ||
+    (userProfile?.organizationId && userProfile?.isOrgAdmin === true);
 
   // 👨‍⚕️ Check if user is a THERAPIST (but NOT an admin)
   const isTherapistUser = (isTherapist || userProfile?.role === 'therapist' || userProfile?.isTherapist === true) && !isOrganizationAdmin;
@@ -12634,6 +12642,27 @@ const AppWithAuth = () => {
       <TherapistDashboard
         organizationId={userProfile?.organizationId || organization?.id}
         therapistId={therapistId}
+      />
+    );
+  }
+
+  // 🎯 ONBOARDING CHECK - Show onboarding for new users who haven't completed it
+  // Skip for org users (they have their own onboarding)
+  const needsOnboarding =
+    userProfile &&
+    !userProfile.onboardingCompleted &&
+    userProfile.accountType !== 'organization' &&
+    !userProfile.organizationId;
+
+  if (needsOnboarding) {
+    console.log('🎯 Showing onboarding for new user:', userProfile?.email);
+    return (
+      <Onboarding
+        user={userProfile}
+        onComplete={() => {
+          // Force reload user profile to get updated onboarding status
+          window.location.reload();
+        }}
       />
     );
   }
