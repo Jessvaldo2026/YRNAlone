@@ -214,7 +214,7 @@ export const AuthProvider = ({ children }) => {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, 'users', result.user.uid), {
         uid: result.user.uid, email, username, name: username, createdAt: new Date().toISOString(),
-        isPremium: false, isOrgAdmin: false, organizationId: null,
+        isPremium: false, isOrgAdmin: false, isOrgUser: false, organizationId: null,
         pet: { type: 'teddy', name: 'Teddy', mood: 'happy', level: 1, experience: 0 },
         stats: { postsCreated: 0, journalEntries: 0, supportGiven: 0, daysActive: 0 },
         preferences: { theme: 'kawaii', language: 'en', notifications: true }
@@ -11118,7 +11118,9 @@ const YRNAloneApp = () => {
             matchingPreferences: userData.matchingPreferences || prev.matchingPreferences,
             bio: userData.bio || '',
             organizationId: userData.organizationId || null,
-            isOrgAdmin: userData.isOrgAdmin || false
+            organizationName: userData.organizationName || null,
+            isOrgAdmin: userData.isOrgAdmin || false,
+            isOrgUser: userData.isOrgUser || userData.isOrgMember || false // 🎯 Sync org user flag
           }));
           
           // Also sync premium tier
@@ -11148,7 +11150,30 @@ const YRNAloneApp = () => {
     
     return () => unsubscribe();
   }, []);
-  
+
+  // 🏢 CRITICAL FIX: Org admin redirect - runs after user data loads
+  // This ensures org admin NEVER sees user home view - doesn't wait for enterprise context
+  const [orgAdminChecked, setOrgAdminChecked] = useState(false);
+  useEffect(() => {
+    // Check sessionStorage flag set during login
+    const pendingRedirect = sessionStorage.getItem('pendingAdminRedirect');
+
+    if (pendingRedirect === 'true' && currentView === 'home') {
+      console.log('🏢 Redirecting org admin to dashboard...');
+      sessionStorage.removeItem('pendingAdminRedirect');
+      setCurrentView('admin');
+      setOrgAdminChecked(true);
+      return;
+    }
+
+    // Also check user data directly - don't wait for enterprise context
+    if (!orgAdminChecked && user && user.isOrgAdmin && user.organizationId && currentView === 'home') {
+      console.log('🏢 Org admin detected from user data, redirecting...');
+      setCurrentView('admin');
+      setOrgAdminChecked(true);
+    }
+  }, [user, user?.isOrgAdmin, user?.organizationId, currentView, orgAdminChecked]);
+
   // Default groups structure (used if Firestore is empty)
   const DEFAULT_GROUPS = [
     { id: 'depression', name: '💙 Depression Support', description: 'A safe space for those dealing with depression' },
